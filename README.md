@@ -12,9 +12,30 @@ A real-time, private bookmark manager built with Next.js, TypeScript, Tailwind C
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion, Lucide React.
-- **Backend**: Supabase (Auth, Realtime, API).
-- **Database**: PostgreSQL (via Supabase).
+<p align="left">
+  <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/supabase-3FC68D?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/typescript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/tailwindcss-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/framer--motion-0055FF?style=for-the-badge&logo=framer&logoColor=white" alt="Framer Motion" />
+</p>
+
+## Project Structure
+
+```bash
+SmartBookMark/
+├── src/
+│   ├── app/              # Next.js App Router (Pages & API)
+│   │   ├── auth/         # OAuth Callback handlers
+│   │   └── globals.css   # Premium Design Tokens
+│   ├── components/       # Premium Glassmorphism UI Components
+│   ├── utils/            # Supabase Client & Middleware
+│   └── types/            # TypeScript Definitions
+├── public/               # Static Assets
+└── supabase_setup.sql    # Database Schema & RLS Policies
+```
+
+
 
 ## Getting Started
 
