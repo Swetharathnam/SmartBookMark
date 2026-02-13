@@ -49,17 +49,25 @@ npm run dev
 
 ## Challenges & Solutions
 
-### 1. Real-time Sync across Tabs
-**Problem**: When adding a bookmark in one tab, it wouldn't show up in others without a refresh.
-**Solution**: Implemented Supabase Realtime. By subscribing to `postgres_changes`, the application listens for any insert/delete/update events on the `bookmarks` table and updates the local state immediately.
+### 1. Real-time Multi-Tab Updates (No Refresh)
+- **Problem**: Bookmark list updates in real-time without page refresh (if you open two tabs and add a bookmark in one, it should appear in the other). Initially, changes made in session A were not reflected in session B without a manual refresh.
+- **Solution**: Implemented **Supabase Realtime** by subscribing to `postgres_changes`. The application now listens for all `INSERT`, `UPDATE`, and `DELETE` events on the `bookmarks` table and synchronizes the UI state across all active tabs instantly.
 
 ### 2. Secure Data Access
 **Problem**: Ensuring User A cannot see or delete User B's bookmarks.
 **Solution**: Leveraged Supabase's Row Level Security (RLS). Policies were created to restrict `SELECT`, `INSERT`, and `DELETE` operations based on the `auth.uid()`, making data privacy a core part of the database architecture.
 
-### 3. Authentication Callback Flow
-**Problem**: Handling the transition from Google OAuth back to the application.
-**Solution**: Created a custom `auth/callback` route for exchange of the temporary code for a session token, ensuring a smooth redirect back to the app with the user's session initialized correctly.
+### 3. Realtime Subscription Instability
+- **Problem**: The Supabase client was being recreated on every render, causing the WebSocket connection to drop and reconnect constantly.
+- **Solution**: Stabilized the Supabase client instance using React's `useState` hooks to ensure a persistent connection across renders.
+
+### 4. Restricted Networks & WebSocket Blocks
+- **Problem**: In some environments, WebSockets (used for Realtime) are blocked, resulting in a permanent `TIMEOUT` or `CLOSED` status.
+- **Solution**: Implemented an **Automatic Polling Fallback**. If the realtime status is not `SUBSCRIBED`, the application automatically refreshes the bookmark list every 5 seconds, ensuring a seamless experience even without a live WebSocket connection.
+
+### 5. Instant UI Feel (Optimistic Updates)
+- **Problem**: Deleting a bookmark felt slow because it waited for the database confirmation.
+- **Solution**: Used **Optimistic UI updates** to remove the bookmark from the screen immediately while the API call is still in progress, with a silent rollback if it fails.
 
 ## Deployment
 
