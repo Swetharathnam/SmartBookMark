@@ -4,11 +4,11 @@ import { createClient } from '@/utils/supabase/client'
 import { Plus, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
-export default function BookmarkForm() {
+export default function BookmarkForm({ onBookmarkAdded }: { onBookmarkAdded?: () => void }) {
     const [title, setTitle] = useState('')
     const [url, setUrl] = useState('')
     const [loading, setLoading] = useState(false)
-    const supabase = createClient()
+    const supabase = useState(() => createClient())[0]
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -27,9 +27,18 @@ export default function BookmarkForm() {
 
             setTitle('')
             setUrl('')
-        } catch (error) {
+            if (onBookmarkAdded) onBookmarkAdded()
+        } catch (error: any) {
             console.error('Error adding bookmark:', error)
-            alert('Failed to add bookmark. Check console for details.')
+            let message = 'Failed to add bookmark.'
+            if (error.code === '42P01') {
+                message = 'Database table "bookmarks" not found. Please run the script in supabase_setup.sql first.'
+            } else if (error.code === '42501') {
+                message = 'Permission denied. Please check your RLS policies in Supabase.'
+            } else if (error.message) {
+                message = `Error: ${error.message}`
+            }
+            alert(message)
         } finally {
             setLoading(false)
         }

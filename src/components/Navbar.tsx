@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 
 export default function Navbar() {
     const [user, setUser] = useState<User | null>(null)
-    const supabase = createClient()
+    const supabase = useState(() => createClient())[0]
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => {

@@ -12,7 +12,7 @@ import { Sparkles } from 'lucide-react'
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useState(() => createClient())[0]
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -26,6 +26,12 @@ export default function Home() {
 
     return () => subscription.unsubscribe()
   }, [supabase.auth])
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  const handleBookmarkAdded = () => {
+    setRefreshTrigger(prev => prev + 1)
+  }
 
   if (loading) {
     return (
@@ -58,16 +64,13 @@ export default function Home() {
                 Save, manage, and sync your favorite links across all your devices instantly.
                 Experience a bookmark manager that's as fast as you are.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex justify-center">
                 <button
                   onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}
-                  className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95"
+                  className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] active:scale-95"
                 >
                   Get Started for Free
                 </button>
-                <div className="px-8 py-4 border border-white/10 rounded-full font-semibold text-gray-300 backdrop-blur-sm">
-                  Google OAuth Required
-                </div>
               </div>
             </motion.div>
           </div>
@@ -78,7 +81,7 @@ export default function Home() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
               >
-                <BookmarkForm />
+                <BookmarkForm onBookmarkAdded={handleBookmarkAdded} />
               </motion.div>
             </div>
             <div className="lg:col-span-8">
@@ -96,7 +99,7 @@ export default function Home() {
                     </span>
                   </h2>
                 </div>
-                <BookmarkList />
+                <BookmarkList refreshTrigger={refreshTrigger} />
               </motion.div>
             </div>
           </div>

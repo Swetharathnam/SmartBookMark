@@ -6,10 +6,10 @@ import { Trash2, ExternalLink, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function BookmarkList() {
+export default function BookmarkList({ refreshTrigger }: { refreshTrigger?: number }) {
     const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
     const [loading, setLoading] = useState(true)
-    const supabase = createClient()
+    const supabase = useState(() => createClient())[0]
 
     const fetchBookmarks = async () => {
         const { data, error } = await supabase
@@ -27,10 +27,12 @@ export default function BookmarkList() {
 
     useEffect(() => {
         fetchBookmarks()
+    }, [refreshTrigger]) // Refetch when parent triggers
 
+    useEffect(() => {
         // Real-time subscription
         const channel = supabase
-            .channel('bookmarks')
+            .channel('bookmarks-channel') // Named channel for stability
             .on(
                 'postgres_changes',
                 {
@@ -39,8 +41,13 @@ export default function BookmarkList() {
                     table: 'bookmarks',
                 },
                 (payload) => {
+                    console.log('Realtime event received:', payload.eventType, payload)
                     if (payload.eventType === 'INSERT') {
-                        setBookmarks((prev) => [payload.new as Bookmark, ...prev])
+                        setBookmarks((prev) => {
+                            // Check if already exists to avoid duplicates
+                            if (prev.some(b => b.id === payload.new.id)) return prev
+                            return [payload.new as Bookmark, ...prev]
+                        })
                     } else if (payload.eventType === 'DELETE') {
                         setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id))
                     } else if (payload.eventType === 'UPDATE') {
@@ -50,17 +57,25 @@ export default function BookmarkList() {
                     }
                 }
             )
-            .subscribe()
+            .subscribe((status) => {
+                console.log('Realtime subscription status:', status)
+            })
 
         return () => {
+            console.log('Cleaning up realtime subscription...')
             supabase.removeChannel(channel)
         }
     }, [supabase])
 
     const handleDelete = async (id: string) => {
+        // Optimistic update
+        const previousBookmarks = [...bookmarks]
+        setBookmarks((prev) => prev.filter((b) => b.id !== id))
+
         const { error } = await supabase.from('bookmarks').delete().eq('id', id)
         if (error) {
             console.error('Error deleting bookmark:', error)
+            setBookmarks(previousBookmarks) // Rollback
             alert('Failed to delete bookmark')
         }
     }
